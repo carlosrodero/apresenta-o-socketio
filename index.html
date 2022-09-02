@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Socket.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style/style.css">
+</head>
+<body>
+  <div id="app">
+    <div v-if="state == 0">
+      <form @submit.prevent="setUsername" class="form-login">
+        <h3>Insira o nome para acessar o chat</h3>
+        <input type="text" class="input-login" placeholder="Digite seu nome..." v-model:value="username"/>
+        <input type="submit" value="Entrar" class="botao-login" />
+      </form>
+    </div>
+    <div v-if="state == 1" class="chat-wrapper">
+      <ul id="chatbox">
+        <li v-for="message in messages">
+          <b>{{ message.user }}:</b> {{ message.message }}
+        </li>
+      </ul>
+      <form @submit.prevent="sendMessage" class="form-mensagem">
+        <input type="text" placeholder="Digite sua mensagem..." class="input-mensagem" v-model:value="message" />
+        <input type="submit" value="Enviar" class="botao-mensagem" />
+      </form>
+    </div>
+    <div class="copy">
+      Trabalho desenvolvido para apresentação ao time da Omny.<br/>
+      por Carlos Rodero
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script>
+    var socket = null;
+    var app = new Vue({
+      el: '#app',
+      data: {
+        messages: [],
+        message: '',
+        username: '',
+        state: 0
+      },
+      methods: {
+        setUsername: function () {
+          socket.emit('join', this.username);
+          this.username = '';
+          this.state = 1;
+        },
+        sendMessage: function () {
+          socket.emit('message', this.message);
+          this.message = '';
+        }
+      },
+      created: function () {
+        socket = io();
+      },
+      mounted: function () {
+        document.querySelector('.input-login').focus();
+        socket.on('message', function (message) {
+          app.messages.push(message);
+          app.$nextTick(function () {
+            var messageBox = document.getElementById('chatbox');
+            messageBox.scrollTop = messageBox.scrollHeight;
+          });
+        });
+      }
+    });
+  </script>
+</body>
+</html>
